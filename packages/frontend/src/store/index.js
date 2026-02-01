@@ -14,6 +14,7 @@ import task from './task';
 import router from '../router';
 import topic_proposal from './topic_proposal';
 import notification from './notification';
+import committee from './committee';
 /**
  * Disable persisted state when in embed mode!
  */
@@ -37,8 +38,19 @@ const vuexLocal = createPersistedState({
     'topic.listTopics',
     'schedule',
     'schedule.listSchedules',
-    'task.listScheduleTopic',
+    'schedule.listScheduleToday',
+    'schedule.isPermit',
+    'schedule.isScheduleProposal',
+    'task.isScheduleRegister',
+    'task.isScheduleApprove',
     'task.listTopic',
+    'task.topicId',
+    'task.listTask',
+    'task.listMember',
+    'task.listStudents',
+    'topic_proposal.listTopicProposalCreated',
+    'topic_proposal.listTopicProposalByLecturer',
+    'topic_proposal.listTopicProposalAdmin',
   ],
 
   getState: (key, storage) => {
@@ -56,14 +68,23 @@ const vuexLocal = createPersistedState({
 
 const createWebSocketPlugin = (socket) => (store) => {
   store.$socket = socket;
-  // socket.on('connect', () => {
-  //   socket.emit('login', null);
-  // });
+  socket.on('connect', () => {
+    const { _id } = store.state.auth.userInfo;
+    if (_id) { socket.emit('login', _id); }
+  });
 
   socket.on('notify', async () => {
     const { token } = store.state.auth.userInfo;
     if (token) {
       await store.dispatch('notification/fetchListNotifications', token);
+    }
+  });
+
+  socket.on('task', async (data) => {
+    const { topicId } = store.state.task;
+    const { token } = store.state.auth.userInfo;
+    if (topicId === data) {
+      await store.dispatch('task/fetchAllTask', { token, topicId });
     }
   });
 };
@@ -74,7 +95,17 @@ const websocketPlugin = createWebSocketPlugin(socket);
 
 const store = new Vuex.Store({
   modules: {
-    auth, student, url, lecturer, admin, topic, schedule, topic_proposal, notification, task,
+    auth,
+    student,
+    url,
+    lecturer,
+    admin,
+    topic,
+    schedule,
+    topic_proposal,
+    notification,
+    task,
+    committee,
   },
   plugins: [vuexLocal, websocketPlugin],
 });

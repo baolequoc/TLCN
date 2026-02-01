@@ -1,5 +1,10 @@
 <template>
   <div class="shadow-md sm:rounded-lg m-4">
+    <SearchInput
+      v-model="searchVal"
+      :search-icon="true"
+      @keydown.space.enter="search"
+    />
     <table class="w-full text-sm text-left text-gray-500">
       <thead class="text-xs text-gray-700 uppercase bg-gray-300">
         <tr>
@@ -25,7 +30,7 @@
       </thead>
       <tbody>
         <tr
-          v-for="topic in listTopicProposal"
+          v-for="topic in topicProposals"
           :key="`topic-${topic._id}`"
           class="bg-slate-300 hover:bg-gray-50 "
         >
@@ -61,19 +66,37 @@
       </tbody>
     </table>
   </div>
+  <ConfirmModal
+    v-model="showConfirmModal"
+    @confirm="confirmRemove"
+    @cancel="showConfirmModal=false"
+  >
+    <template #title>
+      Xác nhận
+    </template>
+    <div>Bạn sẽ từ chối đề tài đúng không?</div>
+  </ConfirmModal>
 </template>
 
 <script>
 import { mapState, mapGetters } from 'vuex';
+import SearchInput from 'vue-search-input';
+// Optionally import default styling
+import 'vue-search-input/dist/styles.css';
+import ConfirmModal from '../Modal/ConfirmModal.vue';
 
 export default {
   name: 'ManageApproveProposalAdmin',
   components: {
-
+    SearchInput,
+    ConfirmModal,
   },
   data () {
     return {
-
+      showConfirmModal: false,
+      removeId: '',
+      searchVal: '',
+      topicProposals: [],
     };
   },
   computed: {
@@ -120,8 +143,25 @@ export default {
     await this.$store.dispatch('topic_proposal/fetchListTopicProposalAdmin', this.token);
     await this.$store.dispatch('student/fetchListStudent', this.token);
     await this.$store.dispatch('lecturer/fetchListLecturer', this.token);
+    this.topicProposals = this.listTopicProposal;
   },
   methods: {
+    async confirmRemove () {
+      const id = this.removeId;
+      this.showConfirmModal = false;
+      try {
+        const value = {
+          id,
+          token: this.token,
+        };
+        await this.$store.dispatch('topic_proposal/removeTopicProposal', value);
+        this.$toast.success('Đã từ chối hướng dẫn đề tài thành công!');
+        this.search();
+      } catch (e) {
+        this.$toast.error('Đã có lỗi xảy ra, vui lòng kiểm tra lại dữ liệu!');
+      }
+      this.removeId = '';
+    },
     handleUpdateTopic (id) {
       this.$store.dispatch('url/updateSection', `${this.module}-update`);
       this.$store.dispatch('url/updateId', id);
@@ -131,17 +171,8 @@ export default {
       this.$store.dispatch('url/updateId', id);
     },
     async handleRemoveTopicProposal (id) {
-      try {
-        const value = {
-          id,
-          token: this.token,
-        };
-        await this.$store.dispatch('topic_proposal/removeTopicProposal', value);
-
-        this.$toast.success('Đã từ chối hướng dẫn đề tài thành công!');
-      } catch (e) {
-        this.$toast.error('Đã có lỗi xảy ra, vui lòng kiểm tra lại dữ liệu!');
-      }
+      this.removeId = id;
+      this.showConfirmModal = true;
     },
     async handleApproveTopic (id) {
       try {
@@ -159,6 +190,18 @@ export default {
     },
     displayLecturer (lecturer) {
       return lecturer ? lecturer.name : '';
+    },
+    search () {
+      if (this.searchVal !== '') {
+        const topicFilter = this.listTopicProposal.filter((topic) => {
+          const re = new RegExp(`\\b${this.searchVal}`, 'gi');
+          if (topic.title.match(re)) return true;
+          if (topic.createdInfo.name.match(re)) return true;
+          if (topic.createdInfo.code.match(re)) return true;
+          return false;
+        });
+        this.topicProposals = topicFilter;
+      } else this.topicProposals = this.listTopicProposal;
     },
   },
 };

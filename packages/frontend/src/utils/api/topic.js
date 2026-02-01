@@ -13,8 +13,35 @@ export default class TopicApi {
     return res.data;
   }
 
+  static async getTopic (token, id) {
+    const res = await axios.get(`/topic/${id}`, {
+      headers: {
+        authorization: `bearer ${token}`,
+      },
+    });
+    return res.data;
+  }
+
   static async listAllTopicsByLecturerId (token, lecturerId) {
     const res = await axios.get(`/topic?lecturerId=${lecturerId}`, {
+      headers: {
+        authorization: `bearer ${token}`,
+      },
+    });
+    return res.data;
+  }
+
+  static async listAllTopicsByLecturerIdAndScheduleId (token, lecturerId, scheduleId) {
+    const res = await axios.get(`/topic?lecturerId=${lecturerId}&scheduleId=${scheduleId}`, {
+      headers: {
+        authorization: `bearer ${token}`,
+      },
+    });
+    return res.data;
+  }
+
+  static async listAllTopicsByScheduleId (token, scheduleId) {
+    const res = await axios.get(`/topic?scheduleId=${scheduleId}`, {
       headers: {
         authorization: `bearer ${token}`,
       },
@@ -121,6 +148,24 @@ export default class TopicApi {
     return res.data;
   }
 
+  static async addRegisterTopicNew (token, id) {
+    const res = await axios.post(`/register/${id}`, {}, {
+      headers: {
+        authorization: `bearer ${token}`,
+      },
+    });
+    return res.data;
+  }
+
+  static async removeRegisterTopicStudent (token, id) {
+    const res = await axios.delete(`/register/${id}`, {
+      headers: {
+        authorization: `bearer ${token}`,
+      },
+    });
+    return res.data;
+  }
+
   static async getResultRegister (token) {
     const res = await axios.get('/topic/student/result', {
       headers: {
@@ -137,5 +182,76 @@ export default class TopicApi {
       },
     });
     return res.data;
+  }
+
+  static async listTopicStudents (token, topicId) {
+    const res = await axios.get(`/topic/${topicId}/students`, {
+      headers: {
+        authorization: `bearer ${token}`,
+      },
+    });
+    return res.data;
+  }
+
+  static async listTopicAdvisorApprove (token) {
+    const res = await axios.get('/topic-advisor', {
+      headers: {
+        authorization: `bearer ${token}`,
+      },
+    });
+    return res.data;
+  }
+
+  static async listTopicCriticalApprove (token) {
+    const res = await axios.get('/topic-critical', {
+      headers: {
+        authorization: `bearer ${token}`,
+      },
+    });
+    return res.data;
+  }
+
+  static async topicAdvisorApprove (token, id) {
+    const res = await axios.get(`/topic-advisor/approve/${id}`, {
+      headers: {
+        authorization: `bearer ${token}`,
+      },
+    });
+    return res.data;
+  }
+
+  static async topicCriticalApprove (token, id) {
+    const res = await axios.get(`/topic-critical/approve/${id}`, {
+      headers: {
+        authorization: `bearer ${token}`,
+      },
+    });
+    return res.data;
+  }
+
+  static async topicCommitteeByCritical (token, id) {
+    const res = await axios.get(`/topic-committee/${id}`, {
+      headers: {
+        authorization: `bearer ${token}`,
+      },
+    });
+    return res.data;
+  }
+
+  static async importTopic (token, xlsx) {
+    const formData = new FormData();
+
+    formData.append('xlsx', xlsx);
+    const res = await axios.post(
+      '/topic-import',
+      formData,
+      {
+        headers: {
+          authorization: `bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      },
+    );
+    return res;
   }
 }

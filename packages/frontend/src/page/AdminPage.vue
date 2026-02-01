@@ -9,7 +9,7 @@
       </div>
       <div class="flex grow flex-col">
         <HeaderBarVue :username="userName" />
-        <div class="bg-white mx-4 border rounded h-full">
+        <div class="bg-white mx-4 border rounded overflow-scroll">
           <template v-if="module === 'student'">
             <ManageStudentAdminVue v-if="section === 'student-list'" />
             <FormUserVue
@@ -38,6 +38,11 @@
             <ManageApproveProposalAdminVue v-if="section === 'topic_proposal-list'" />
             <FormApproveVue v-if="section === 'topic_proposal-update' || section === 'topic_proposal-view'" />
           </template>
+          <template v-if="module === 'committee'">
+            <ManageCommitteeAdminVue v-if="section === 'committee-list'" />
+            <FormCommitteeVue v-if="section === 'committee-update' || section === 'committee-import' || section === 'committee-view'" />
+            <FormTopicCommitteeVue v-if="section === 'committee-add-topic'" />
+          </template>
         </div>
       </div>
     </div>
@@ -61,10 +66,13 @@ import ManageAdminVue from '../components/Admin/ManageAdmin.vue';
 import ManageTopicAdminVue from '../components/Admin/ManageTopicAdmin.vue';
 import ManageScheduleAdminVue from '../components/Admin/ManageScheduleAdmin.vue';
 import ManageApproveProposalAdminVue from '../components/Admin/ManageApproveProposalAdmin.vue';
+import ManageCommitteeAdminVue from '../components/Admin/ManageCommitteeAdmin.vue';
 import FormUserVue from '../components/Admin/FormUser.vue';
 import FormTopicVue from '../components/Admin/FormTopic.vue';
 import FormScheduleVue from '../components/Admin/FormSchedule.vue';
 import FormApproveVue from '../components/Admin/FormApprove.vue';
+import FormCommitteeVue from '../components/Admin/FormCommittee.vue';
+import FormTopicCommitteeVue from '../components/Admin/FormTopicCommittee.vue';
 
 export default {
   name: 'AdminPage',
@@ -83,6 +91,9 @@ export default {
     ManageApproveProposalAdminVue,
     FormScheduleVue,
     FormApproveVue,
+    ManageCommitteeAdminVue,
+    FormCommitteeVue,
+    FormTopicCommitteeVue,
   },
   props: {
   },

@@ -6,11 +6,11 @@
     class="z-20 flex-col items-center flex-shrink-0 hidden w-16 py-4 bg-white border-r-2 border-indigo-100 shadow-md sm:flex rounded-tr-3xl rounded-br-3xl"
   >
     <!-- Logo -->
-    <div class="flex-shrink-0 py-4">
-      <a href="#">
+    <div class="flex-shrink-0 py-4 cursor-pointer">
+      <a @click="$router.push('/')">
         <img
           class="h-[40px] my-auto w-[50px]"
-          src="https://fit.hcmute.edu.vn/Resources/Images/SubDomain/fit/logo-cntt2021.png"
+          src="/fit.png"
         >
       </a>
     </div>
@@ -140,9 +140,10 @@
         @click="clickNotifyOrInfo('avatar')"
       >
         <img
+          referrerpolicy="no-referrer"
           class="w-10 h-10 rounded-lg shadow-md"
-          src="https://avatars.githubusercontent.com/u/57622665?s=460&u=8f581f4c4acd4c18c33a87b3e6476112325e8b38&v=4"
-          alt="Ahmed Kamel"
+          :src="userInfo ? userInfo.picture : '/default_avatar.png'"
+          alt="Avatar"
         >
         <span class="sr-only">User menu</span>
       </button>
@@ -153,7 +154,7 @@
         aria-orientation="vertical"
         aria-label="user menu"
       >
-        <a
+        <!-- <a
           href="#"
           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           role="menuitem"
@@ -163,13 +164,13 @@
           href="#"
           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           role="menuitem"
-        >Settings</a>
+        >Settings</a> -->
 
         <a
-          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          class="cursor-pointer block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           role="menuitem"
           @click="signOut"
-        >Sign out</a>
+        >Đăng xuất</a>
       </div>
     </div>
   </nav>
@@ -178,6 +179,7 @@
 <script>
 import { mapState, mapGetters } from 'vuex';
 import moment from 'moment';
+import 'moment/dist/locale/vi';
 
 export default {
   name: 'LeftMiniBar',
@@ -196,7 +198,7 @@ export default {
       isAuthenticated: ({ auth: { isAuthenticated } }) => isAuthenticated,
     }),
     ...mapGetters('auth', [
-      'userId', 'userEmail', 'userRole', 'token',
+      'userId', 'userEmail', 'userRole', 'token', 'userInfo',
     ]),
     ...mapGetters('notification', [
       'listNotifications',
@@ -211,6 +213,7 @@ export default {
   methods: {
     async signOut () {
       const { _id } = this.$store.state.auth.userInfo;
+      await this.$store.dispatch('url/clearUrls');
       await this.$store.$socket.emit('logout', _id);
       this.$store.dispatch('auth/signOut');
     },
@@ -227,6 +230,7 @@ export default {
       this.$store.dispatch('url/updatePage', page);
     },
     timeAgo (createdAt) {
+      moment.updateLocale('vi');
       return moment(createdAt).fromNow();
     },
     unreadCount (listNotifications) {

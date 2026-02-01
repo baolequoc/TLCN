@@ -12,16 +12,14 @@
     </div>
     <div class="flex mt-4 justify-between items-center">
       <span class="text-sm text-gray-600">{{ task.code }}</span>
-      <badge
-        v-if="task.type"
-        :color="badgeColor"
-      >
-        {{ task.type }}
+      <badge>
+        {{ getAssignName(task.assignTo) ? getAssignName(task.assignTo).name : '' }}
       </badge>
     </div>
   </div>
 </template>
 <script>
+import { mapGetters } from 'vuex';
 import Badge from './TaskBadge.vue';
 
 export default {
@@ -35,15 +33,13 @@ export default {
     },
   },
   computed: {
-    badgeColor () {
-      const mappings = {
-        Design: 'purple',
-        'Feature Request': 'teal',
-        Backend: 'blue',
-        QA: 'green',
-        default: 'teal',
-      };
-      return mappings[this.task.type] || mappings.default;
+    ...mapGetters('task', [
+      'listMember',
+    ]),
+  },
+  methods: {
+    getAssignName (id) {
+      return this.listMember.find((e) => e._id === id);
     },
   },
 };

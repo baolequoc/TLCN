@@ -10,19 +10,13 @@ const findOne = async (_id) => {
   return schedule;
 };
 
-const createOne = async (name, description, startDate, endDate, students, topics) => {
-  let listStudents = [];
-  let listTopics = [];
-  if (students) listStudents = students;
-  if (topics) listTopics = topics;
-  const schedule = await _Schedule.create({
-    name,
-    description,
-    startDate,
-    endDate,
-    students: listStudents,
-    topics: listTopics,
-  });
+const findOneByCode = async (code) => {
+  const schedule = _Schedule.findOne({ code });
+  return schedule;
+};
+
+const createOne = async (value) => {
+  const schedule = await _Schedule.create(value);
   return schedule;
 };
 
@@ -30,16 +24,8 @@ const removeSchedule = async (id) => {
   await _Schedule.deleteOne({ _id: id });
 };
 
-const updateOne = async (_id, name, description, startDate, endDate, students, topics) => {
-  let value = {
-    name,
-    description,
-    startDate,
-    endDate,
-  };
-  if (students) value = { ...value, students };
-  if (topics) value = { ...value, topics };
-  await _Schedule.updateOne({ _id }, value);
+const updateOne = async (id, value) => {
+  await _Schedule.updateOne({ _id: id }, value);
 };
 
 const listBetweenTime = async (from, to) => {
@@ -57,14 +43,6 @@ const listBetweenTime = async (from, to) => {
     schedule = _Schedule.find({}).sort({ startDate: -1 });
   }
   return schedule;
-};
-
-const updateStudents = async (_id, students) => {
-  await _Schedule.updateOne({ _id }, { students });
-};
-
-const updateTopics = async (_id, topics) => {
-  await _Schedule.updateOne({ _id }, { topics });
 };
 
 const listStudents = async (_id) => {
@@ -105,7 +83,7 @@ const listScheduleTopicLecturerShort = async (_id, lecturerId) => {
   const schedules = await _Schedule.find({});
   const topicList = await Promise.all(
     schedules.map(async (k) => {
-      const topics = await _Topic.find({ code: { $in: k.topics }, lecturerId })
+      const topics = await _Topic.find({ scheduleId: k._id, lecturerId })
         .select('_id title code');
       return { _id: k._id, name: k.name, topics };
     }),
@@ -134,18 +112,31 @@ const checkStudentInTopic = async (user, schedule) => {
   return flag;
 };
 
+const updateStudents = async (_id, students) => {
+  const schedule = await _Schedule.findById(_id);
+  schedule.students = students;
+  await schedule.save();
+};
+
+const updateTopics = async (_id, topics) => {
+  const schedule = await _Schedule.findById(_id);
+  schedule.topics = topics;
+  await schedule.save();
+};
+
 module.exports = {
   findOne,
+  findOneByCode,
   createOne,
   updateOne,
   listBetweenTime,
-  updateStudents,
   listStudents,
-  updateTopics,
   listTopics,
   listScheduleTopicLecturer,
   listScheduleTopicLecturerShort,
   listTopicLecturer,
   checkStudentInTopic,
   removeSchedule,
+  updateStudents,
+  updateTopics,
 };

@@ -43,6 +43,9 @@ const loginWithGoogle = async (req, res, next) => {
     if (!user) {
       return res.status(401).send({ message: 'The email is not exist' });
     }
+    user.picture = userInfo.picture;
+    user.save();
+
     const token = jwt.sign({ email, role }, secretKey, {
       expiresIn: '720h',
     });
@@ -83,9 +86,8 @@ const deleteNotification = async (req, res, next) => {
 };
 
 const test = async (req, res) => {
-  const socketId = await notifyService.getSocketIdByUserId('6375b66924ace35d440f51ed');
-  console.log('🚀 ~ file: auth.controller.js:77 ~ test ~ socketId', socketId);
-  await getIo().emit('notify', 'notify send by server');
+  // const socketId = await notifyService.getSocketIdByUserId('6375b66924ace35d440f51ed');
+  await getIo().emit('task', 'notify send by server');
   return res.sendStatus(200);
 };
 

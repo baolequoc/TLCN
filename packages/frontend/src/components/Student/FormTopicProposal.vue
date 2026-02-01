@@ -39,15 +39,7 @@
           name="limit"
           type="number"
           label="Số thành viên"
-          validation="required"
-          :disabled="isView"
-        />
-        <FormKit
-          v-model="major"
-          name="major"
-          type="text"
-          label="Chuyên ngành"
-          validation="required"
+          validation="min:1"
           :disabled="isView"
         />
         <FormKit
@@ -90,6 +82,19 @@
             />
           </div>
         </div>
+        <div class="my-2-1 w-2/5">
+          <span class="font-bold text-sm py-4 my-4">
+            Đợt đăng ký
+          </span>
+          <div class="mt-1">
+            <Multiselect
+              v-model="scheduleId"
+              :options="listSchedules"
+              :searchable="true"
+              :disabled="true"
+            />
+          </div>
+        </div>
       </div>
       <!-- Modal footer -->
       <div class="flex items-center p-6 space-x-2 rounded-b border-t border-gray-200">
@@ -108,8 +113,7 @@
 
 <script>
 import Multiselect from '@vueform/multiselect';
-import { getValidationMessages } from '@formkit/validation';
-import { mapState, mapGetters } from 'vuex';
+import { mapGetters } from 'vuex';
 
 export default {
   name: 'FormTopicProposal',
@@ -123,11 +127,11 @@ export default {
       title: '',
       code: '',
       description: '',
-      limit: '',
+      limit: 1,
       deadline: '',
       lecturerId: '',
-      major: '',
       studentIds: [],
+      scheduleId: '',
       listStudents: [
         'student1',
         'student2',
@@ -140,6 +144,7 @@ export default {
         'lecturer3',
       ],
       messages: '',
+      listSchedules: [],
     };
   },
   computed: {
@@ -148,6 +153,9 @@ export default {
     ]),
     ...mapGetters('auth', [
       'token', 'userId',
+    ]),
+    ...mapGetters('topic_proposal', [
+      'topicScheduleId',
     ]),
     isSave () {
       return this.section === 'topic_proposal-import';
@@ -162,8 +170,11 @@ export default {
   async mounted () {
     await this.$store.dispatch('lecturer/fetchListLecturer', this.token);
     await this.$store.dispatch('student/fetchListStudent', this.token);
+    await this.$store.dispatch('schedule/fetchListScheduleToday', this.token);
     const lecturers = this.$store.state.lecturer.listLecturer;
     const students = this.$store.state.student.listStudents;
+    const schedules = this.$store.state.schedule.listScheduleProposalStudent;
+    this.scheduleId = this.topicScheduleId;
     this.listLecturers = lecturers.map((lecturer) => {
       let l = {
         value: lecturer._id,
@@ -184,6 +195,16 @@ export default {
       }
       return st;
     });
+    this.listSchedules = schedules.map((schedule) => {
+      let st = {
+        value: schedule._id,
+        label: schedule.code,
+      };
+      if (this.isView) {
+        st = { ...st, disabled: true };
+      }
+      return st;
+    });
     if (this.isUpdate || this.isView) {
       const { id } = this.$store.state.url;
       const { listTopicProposalCreated } = this.$store.state.topic_proposal;
@@ -193,6 +214,7 @@ export default {
         this.code = topic.code;
         this.description = topic.description;
         this.limit = topic.limit;
+        if (topic.scheduleId) this.scheduleId = topic.scheduleId;
         if (topic.deadline) {
           const date = new Date(topic.deadline);
           const dateString = new Date(date.getTime() - (date.getTimezoneOffset() * 60000))
@@ -200,40 +222,68 @@ export default {
             .split('T')[0];
           this.deadline = dateString;
         }
-        if (topic.lecturerId) this.lecturerId = topic.lecturerId;
-        this.major = topic.major;
+        if (topic.lecturerId) this.lecturerId = topic.lecturerId._id;
         this.studentIds = topic.students;
       }
     }
   },
   methods: {
-    rollBack () {
-      this.$store.dispatch('url/updateSection', `${this.module}-list`);
+    async rollBack () {
+      await this.$store.dispatch('url/updateSection', `${this.module}-list`);
     },
     async handleAddTopicAdmin () {
-      const { studentIds } = this;
+      const { studentIds, scheduleId } = this;
       const value = {
         title: this.title,
         limit: this.limit,
         description: this.description,
         deadline: this.deadline,
-        major: this.major,
         students: studentIds,
         lecturerId: this.lecturerId,
+        scheduleId,
         status: 'LECTURER',
       };
       try {
-        if (this.isSave) {
-          await this.$store.dispatch('topic_proposal/addTopicProposal', { token: this.token, value });
-        } else if (this.isUpdate) {
-          await this.$store.dispatch('topic_proposal/updateTopicProposal', { token: this.token, value: { ...value, _id: this.id } });
+        if (value.lecturerId !== '' && !!value.lecturerId) {
+          if (this.check() && this.isSave) {
+            await this.$store.dispatch('topic_proposal/addTopicProposal', { token: this.token, value });
+            this.$toast.success('Đã thêm thành công!');
+            this.rollBack();
+          } else if (this.check() && this.isUpdate) {
+            await this.$store.dispatch('topic_proposal/updateTopicProposal', { token: this.token, value: { ...value, _id: this.id } });
+            this.$toast.success('Đã cập nhật thành công!');
+            this.rollBack();
+          }
+        } else {
+          this.$toast.error('Vui lòng chọn GVHD');
         }
-        this.$toast.success('Đã cập nhật một thành công!');
       } catch (e) {
+        console.log('🚀 ~ file: FormTopicProposal.vue:261 ~ handleAddTopicAdmin ~ e', e);
         this.$toast.error('Đã có lỗi xảy ra, vui lòng kiểm tra lại dữ liệu!');
-      } finally {
-        this.rollBack();
       }
+    },
+    check () {
+      if (!this.title) {
+        this.$toast.error('Vui lòng nhập tên đề tài');
+        return false;
+      }
+      if (!this.limit) {
+        this.$toast.error('Vui lòng số lượng thành viên mã đề tài');
+        return false;
+      }
+      if (Number(this.limit) < 1 || Number(this.limit) > 3) {
+        this.$toast.error('Số lượng thành viên không quá 3 thành viên và không nhỏ hơn 1');
+        return false;
+      }
+      if (!this.lecturerId) {
+        this.$toast.error('Vui lòng chọn giảng viên đề tài');
+        return false;
+      }
+      if (this.studentIds.length > this.limit) {
+        this.$toast.error('Số lượng sinh viên được chọn không được quá số lượng giới hạn');
+        return false;
+      }
+      return true;
     },
   },
 };

@@ -23,23 +23,17 @@
           label="Tiêu đề"
           help="Vd: Xây dụng web thương mại điện tử e-shop"
           validation="required"
+          :validation-messages="{ required: 'Vui lòng điền thông tin vào ô này' }"
           :disabled="isView"
         />
         <FormKit
+          v-if="isView"
           v-model="code"
           name="code"
           type="text"
           label="Mã đề tài"
           validation="required"
-          :disabled="isView"
-        />
-        <FormKit
-          v-model="description"
-          name="description"
-          type="textarea"
-          label="Mô tả"
-          help="Ghi các thông tin chi tiết tại đây"
-          validation="required"
+          :validation-messages="{ required: 'Vui lòng điền thông tin vào ô này' }"
           :disabled="isView"
         />
         <FormKit
@@ -47,26 +41,21 @@
           name="limit"
           type="number"
           label="Số thành viên"
-          validation="required"
+          validation="min:1|max:3"
           :disabled="isView"
+          :validation-messages="{ min: 'Phải có ít nhất 1 thành viên', max:'Có tối đa 3 thành viên' }"
         />
         <FormKit
-          v-model="major"
-          name="major"
-          type="text"
-          label="Chuyên ngành"
-          validation="required"
-          :disabled="isView"
-        />
-        <FormKit
-          v-model="deadline"
-          name="deadline"
+          v-model="
+            thesisDefenseDate"
+          name="thesisDefenseDate"
           type="date"
-          label="Thời hạn hoàn thành"
+          label="Thời hạn phản biện"
           validation="required"
           :disabled="isView"
+          :validation-messages="{ required: 'Vui lòng điền thông tin vào ô này' }"
         />
-        <div class="w-3/4">
+        <div class="w-3/5">
           <span class="font-bold text-sm">
             Giáo viên hướng dẫn
           </span>
@@ -74,12 +63,25 @@
             <Multiselect
               v-model="lecturerId"
               :options="listLecturers"
-              :close-on-select="false"
+              :searchable="true"
               :disabled="isView"
             />
           </div>
         </div>
-        <div class="my-2-1 w-3/4">
+        <div class="w-3/5">
+          <span class="font-bold text-sm">
+            Giáo viên phản biện
+          </span>
+          <div class="mt-1">
+            <Multiselect
+              v-model="criticalLecturerId"
+              :options="listLecturers"
+              :searchable="true"
+              :disabled="isView"
+            />
+          </div>
+        </div>
+        <div class="my-2-1 w-3/5">
           <span class="font-bold text-sm py-4 my-4">
             Sinh viên đăng kí
           </span>
@@ -95,6 +97,54 @@
             />
           </div>
         </div>
+        <div class="my-2-1 w-3/5">
+          <span class="font-bold text-sm py-4 my-4">
+            Đợt đăng ký
+          </span>
+          <div class="mt-1">
+            <Multiselect
+              v-model="scheduleId"
+              :options="listSchedules"
+              :searchable="true"
+              :disabled="isView"
+            />
+          </div>
+        </div>
+        <FormKit
+          v-model="advisorLecturerGrade"
+          type="number"
+          label="Điểm của giảng viên hướng dẫn"
+          :disabled="isView"
+        />
+        <FormKit
+          v-model="criticalLecturerGrade"
+          type="number"
+          label="Điểm của giảng viên phản biện"
+          :disabled="isView"
+        />
+        <FormKit
+          v-model="committeePresidentGrade"
+          type="number"
+          label="Điểm của chủ tịch hội đồng"
+          :disabled="isView"
+        />
+        <FormKit
+          v-model="committeeSecretaryGrade"
+          name="limit"
+          type="number"
+          label="Điểm của thư ký"
+          :disabled="isView"
+        />
+        <FormKit
+          v-model="description"
+          name="description"
+          type="textarea"
+          label="Mô tả"
+          help="Ghi các thông tin chi tiết tại đây"
+          validation="required"
+          :validation-messages="{ required: 'Vui lòng điền thông tin vào ô này' }"
+          :disabled="isView"
+        />
       </div>
       <!-- Modal footer -->
       <div class="flex items-center p-6 space-x-2 rounded-b border-t border-gray-200">
@@ -113,8 +163,7 @@
 
 <script>
 import Multiselect from '@vueform/multiselect';
-import { getValidationMessages } from '@formkit/validation';
-import { mapState, mapGetters } from 'vuex';
+import { mapGetters } from 'vuex';
 
 export default {
   name: 'FormTopic',
@@ -129,10 +178,15 @@ export default {
       code: '',
       description: '',
       limit: '',
-      deadline: '',
       lecturerId: '',
-      major: '',
+      criticalLecturerId: '',
       studentIds: [],
+      scheduleId: '',
+      thesisDefenseDate: '',
+      advisorLecturerGrade: '',
+      committeePresidentGrade: '',
+      committeeSecretaryGrade: '',
+      criticalLecturerGrade: '',
       listStudents: [
         'student1',
         'student2',
@@ -144,6 +198,7 @@ export default {
         'lecturer2',
         'lecturer3',
       ],
+      listSchedules: [],
       messages: '',
     };
   },
@@ -167,8 +222,10 @@ export default {
   async mounted () {
     await this.$store.dispatch('lecturer/fetchListLecturer', this.token);
     await this.$store.dispatch('student/fetchListStudent', this.token);
+    await this.$store.dispatch('schedule/fetchListSchedules', this.token);
     const lecturers = this.$store.state.lecturer.listLecturer;
     const students = this.$store.state.student.listStudents;
+    const schedules = this.$store.state.schedule.listSchedules;
     this.listLecturers = lecturers.map((lecturer) => {
       let l = {
         value: lecturer._id,
@@ -182,7 +239,17 @@ export default {
     this.listStudents = students.map((student) => {
       let st = {
         value: student.code,
-        label: student.name,
+        label: `${student.code} - ${student.name}`,
+      };
+      if (this.isView) {
+        st = { ...st, disabled: true };
+      }
+      return st;
+    });
+    this.listSchedules = schedules.map((schedule) => {
+      let st = {
+        value: schedule._id,
+        label: `${schedule.code} : ${schedule.name}`,
       };
       if (this.isView) {
         st = { ...st, disabled: true };
@@ -191,23 +258,28 @@ export default {
     });
     if (this.isUpdate || this.isView) {
       const { id } = this.$store.state.url;
-      const { listTopics } = this.$store.state.topic;
-      const topic = listTopics.find((s) => s._id.toString() === id.toString());
+      const { listTopicsByLecturerSchedule } = this.$store.state.topic;
+      const topic = listTopicsByLecturerSchedule.find((s) => s._id.toString() === id.toString());
       if (topic) {
         this.title = topic.title;
         this.code = topic.code;
         this.description = topic.description;
         this.limit = topic.limit;
-        if (topic.deadline) {
-          const date = new Date(topic.deadline);
+        if (topic.lecturerId) this.lecturerId = topic.lecturerId._id;
+        if (topic.criticalLecturerId) this.criticalLecturerId = topic.criticalLecturerId._id;
+        if (topic.scheduleId) this.scheduleId = topic.scheduleId._id;
+        this.studentIds = topic.students;
+        if (topic.thesisDefenseDate) {
+          const date = new Date(topic.thesisDefenseDate);
           const dateString = new Date(date.getTime() - (date.getTimezoneOffset() * 60000))
             .toISOString()
             .split('T')[0];
-          this.deadline = dateString;
+          this.thesisDefenseDate = dateString;
         }
-        if (topic.lecturerId) this.lecturerId = topic.lecturerId._id;
-        this.major = topic.major;
-        this.studentIds = topic.students;
+        this.advisorLecturerGrade = topic.advisorLecturerGrade;
+        this.committeePresidentGrade = topic.committeePresidentGrade;
+        this.committeeSecretaryGrade = topic.committeeSecretaryGrade;
+        this.criticalLecturerGrade = topic.criticalLecturerGrade;
       }
     }
   },
@@ -216,29 +288,66 @@ export default {
       this.$store.dispatch('url/updateSection', `${this.module}-list`);
     },
     async handleAddTopicAdmin () {
-      const { studentIds, lecturerId } = this;
+      const {
+        scheduleId, studentIds, lecturerId, criticalLecturerId,
+      } = this;
       const value = {
         title: this.title,
         description: this.description,
         code: this.code,
         limit: this.limit,
-        deadline: this.deadline,
-        major: this.major,
         students: studentIds,
         lecturerId,
+        scheduleId,
+        criticalLecturerId,
+        thesisDefenseDate: this.thesisDefenseDate,
+        advisorLecturerGrade: this.advisorLecturerGrade,
+        committeePresidentGrade: this.committeePresidentGrade,
+        committeeSecretaryGrade: this.committeeSecretaryGrade,
+        criticalLecturerGrade: this.criticalLecturerGrade,
       };
       try {
-        if (this.isSave) {
-          await this.$store.dispatch('topic/addTopic', { token: this.token, value });
-        } else if (this.isUpdate) {
-          await this.$store.dispatch('topic/updateTopic', { token: this.token, value: { ...value, _id: this.id } });
+        if (this.check()) {
+          if (this.isSave) {
+            await this.$store.dispatch('topic/addTopic', { token: this.token, value });
+            this.$toast.success('Đã thêm thành công!');
+            this.rollBack();
+          } else if (this.isUpdate) {
+            await this.$store.dispatch('topic/updateTopic', { token: this.token, value: { ...value, _id: this.id } });
+            this.rollBack();
+            this.$toast.success('Đã cập nhật thành công!');
+          }
         }
-        this.$toast.success('Đã cập nhật một thành công!');
       } catch (e) {
         this.$toast.error('Đã có lỗi xảy ra, vui lòng kiểm tra lại dữ liệu!');
-      } finally {
-        this.rollBack();
       }
+    },
+    check () {
+      if (!this.title) {
+        this.$toast.error('Vui lòng nhập tên đề tài');
+        return false;
+      }
+      if (!this.limit) {
+        this.$toast.error('Vui lòng số lượng thành viên mã đề tài');
+        return false;
+      }
+      if (Number(this.limit) < 1 || Number(this.limit) > 3) {
+        this.$toast.error('Số lượng thành viên không quá 3 thành viên và không nhỏ hơn 1');
+        return false;
+      }
+      if (!this.lecturerId) {
+        this.$toast.error('Vui lòng chọn giảng viên hướng dẫn');
+        return false;
+      }
+      if (!this.lecturerId && this.lecturerId === '') {
+        this.$toast.error('Vui lòng chọn giảng viên hướng dẫn');
+        return false;
+      }
+      if (this.studentIds.length > this.limit) {
+        this.$toast.error('Số lượng sinh viên được chọn không được quá số lượng giới hạn');
+        return false;
+      }
+      return true;
     },
   },
 };

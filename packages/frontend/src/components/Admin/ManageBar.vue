@@ -19,7 +19,7 @@
         <a href="#">
           <img
             class="w-2/3 mx-auto"
-            src="https://fit.hcmute.edu.vn/Resources/Images/SubDomain/fit/logo-cntt2021.png"
+            src="/fit.png"
           >
         </a>
       </div>
@@ -36,13 +36,19 @@
           :class="[ isLecturer ? 'flex p-2 items-center w-full space-x-2 text-white bg-indigo-600 rounded-lg' : 'flex p-2   items-center space-x-2 text-indigo-600 transition-colors rounded-lg group hover:bg-indigo-600 hover:text-white']"
           @click="updateModule('lecturer')"
         >
-          Quản lý giáo viên
+          Quản lý giảng viên
         </a>
         <a
           :class="[ isAdmin ? 'flex p-2 items-center w-full space-x-2 text-white bg-indigo-600 rounded-lg' : 'flex p-2   items-center space-x-2 text-indigo-600 transition-colors rounded-lg group hover:bg-indigo-600 hover:text-white']"
           @click="updateModule('admin')"
         >
           Quản lý admin
+        </a>
+        <a
+          :class="[ isCommittee ? 'flex p-2 items-center w-full space-x-2 text-white bg-indigo-600 rounded-lg' : 'flex p-2   items-center space-x-2 text-indigo-600 transition-colors rounded-lg group hover:bg-indigo-600 hover:text-white']"
+          @click="updateModule('committee')"
+        >
+          Quản lý hội đồng
         </a>
         <a
           :class="[ isTopic ? 'flex p-2 items-center w-full space-x-2 text-white bg-indigo-600 rounded-lg' : 'flex p-2   items-center space-x-2 text-indigo-600 transition-colors rounded-lg group hover:bg-indigo-600 hover:text-white']"
@@ -56,12 +62,12 @@
         >
           Quản lý đợt đăng ký
         </a>
-        <a
+        <!-- <a
           :class="[ isTopicProposal ? 'flex p-2 items-center w-full space-x-2 text-white bg-indigo-600 rounded-lg' : 'flex p-2   items-center space-x-2 text-indigo-600 transition-colors rounded-lg group hover:bg-indigo-600 hover:text-white']"
           @click="updateModule('topic_proposal')"
         >
           Duyệt đề tài đề xuất
-        </a>
+        </a> -->
       </div>
     </nav>
   </div>
@@ -101,6 +107,9 @@ export default {
     },
     isTopicProposal () {
       return this.module === 'topic_proposal';
+    },
+    isCommittee () {
+      return this.module === 'committee';
     },
   },
   mounted () {

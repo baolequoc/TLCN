@@ -2,7 +2,7 @@
   <div class="flex h-[60px] shadow-2xl rounded">
     <img
       class="h-[40px] my-auto ml-5 w-[50px]"
-      src="https://fit.hcmute.edu.vn/Resources/Images/SubDomain/fit/logo-cntt2021.png"
+      src="/fit.png"
     >
     <div class="grow flex">
       <div class="grow" />
@@ -57,10 +57,20 @@ export default {
         await this.$store.$socket.emit('id', _id);
         if (typeLogin === 'ADMIN') {
           this.$router.push('/admin');
+          this.$store.dispatch('url/updatePage', 'management');
+          this.$store.dispatch('url/updateModule', 'student');
+          this.$store.dispatch('url/updateSection', 'student-list');
         } else if (typeLogin === 'STUDENT') {
           this.$router.push('/student');
+          this.$store.dispatch('url/updatePage', 'management');
+          this.$store.dispatch('url/updateModule', 'topic');
+          this.$store.dispatch('url/updateSection', 'topic-list');
         } else if (typeLogin === 'LECTURER') {
           this.$router.push('/lecturer');
+          this.$store.dispatch('url/updatePage', 'management');
+          this.$store.dispatch('url/updateModule', 'topic');
+          this.$store.dispatch('url/updateSubModule', 'topic');
+          this.$store.dispatch('url/updateSection', 'topic-list');
         }
       } catch (err) {
         console.log(err.message);

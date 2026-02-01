@@ -26,15 +26,31 @@
                 v-if="section === 'topic-update' || section === 'topic-import' || section === 'topic-view'"
               />
             </template>
-            <template v-if="module === 'topic_proposal'">
-              <ManageTopicProposalLecturerVue v-if="section === 'topic_proposal-list'" />
+            <!-- <template v-if="module === 'topic_proposal'">
+              <ManageTopicProposalLecturerVue
+                v-if="section === 'topic_proposal-list'"
+                :open="isScheduleApprove"
+              />
               <FormTopicProposalVue
                 v-if="section === 'topic_proposal-update' || section === 'topic_proposal-import' || section === 'topic_proposal-view'"
               />
-            </template>
+            </template> -->
             <template v-if="module === 'topic_proposal_approve'">
-              <ManageApproveProposalLecturerVue v-if="section === 'topic_proposal_approve-list'" />
+              <ManageApproveProposalLecturerVue
+                v-if="section === 'topic_proposal_approve-list'"
+                :open="isScheduleApprove"
+              />
               <FormApproveProposalVue v-if="section === 'topic_proposal_approve-view' || section === 'topic_proposal_approve-update'" />
+            </template>
+            <template v-if="module === 'topic_advisor_approve'">
+              <ManageTopicAdvisorLecturerVue
+                v-if="section === 'topic_advisor_approve-list'"
+              />
+            </template>
+            <template v-if="module === 'topic_critical_approve'">
+              <ManageTopicCriticalLecturerVue
+                v-if="section === 'topic_critical_approve-list'"
+              />
             </template>
           </template>
           <template v-if="page === 'task'">
@@ -60,9 +76,11 @@ import ManageBarLecturerVue from '../components/Lecturer/ManageBarLecturer.vue';
 import HeaderBarVue from '../components/Admin/HeaderBar.vue';
 import MiniHeaderBarVue from '../components/Lecturer/MiniHeaderBar.vue';
 import ManageTopicLecturerVue from '../components/Lecturer/ManageTopicLecturer.vue';
-import ManageTopicProposalLecturerVue from '../components/Lecturer/ManageTopicProposalLecturer.vue';
+// import ManageTopicProposalLecturerVue from '../components/Lecturer/ManageTopicProposalLecturer.vue';
 import ManageApproveProposalLecturerVue from '../components/Lecturer/ManageApproveProposalLecturer.vue';
-import FormTopicProposalVue from '../components/Lecturer/FormTopicProposal.vue';
+import ManageTopicAdvisorLecturerVue from '../components/Lecturer/ManageTopicAdvisorLecturer.vue';
+import ManageTopicCriticalLecturerVue from '../components/Lecturer/ManageTopicCriticalLecturer.vue';
+// import FormTopicProposalVue from '../components/Lecturer/FormTopicProposal.vue';
 import FormTopicVue from '../components/Lecturer/FormTopic.vue';
 import FormApproveProposalVue from '../components/Lecturer/FormApproveProposal.vue';
 import TaskBarScheduleVue from '../components/Lecturer/TaskBarSchedule.vue';
@@ -79,13 +97,15 @@ export default {
     MiniHeaderBarVue,
     ManageTopicLecturerVue,
     FormTopicVue,
-    ManageTopicProposalLecturerVue,
-    FormTopicProposalVue,
+    // ManageTopicProposalLecturerVue,
+    // FormTopicProposalVue,
     ManageApproveProposalLecturerVue,
     FormApproveProposalVue,
     TaskBarScheduleVue,
     TaskBarTopicVue,
     TaskDraggableVue,
+    ManageTopicAdvisorLecturerVue,
+    ManageTopicCriticalLecturerVue,
   },
   props: {
   },
@@ -105,6 +125,13 @@ export default {
     ...mapGetters('url', [
       'page', 'module', 'subModule', 'section', 'id',
     ]),
+    ...mapGetters('schedule', [
+      'listScheduleApproveLecturer',
+    ]),
+    isScheduleApprove () {
+      if (!this.listScheduleApproveLecturer || this.listScheduleApproveLecturer.length < 1) return false;
+      return true;
+    },
   },
   async mounted () {
     if (!this.isAuthenticated || this.userRole !== 'LECTURER') {
@@ -117,6 +144,7 @@ export default {
       this.$store.dispatch('url/updateSubModule', 'topic');
       this.$store.dispatch('url/updateSection', 'topic-list');
     }
+    await this.$store.dispatch('schedule/fetchListScheduleApproveLecturer', this.token);
   },
   async created () {
     const { _id } = this.$store.state.auth.userInfo;
